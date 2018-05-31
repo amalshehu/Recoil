@@ -1,14 +1,15 @@
 {
   "name": "react-clone",
   "version": "1.0.0",
-  "description": "Naive React in order to get more familiar with the details of the implementation.",
+  "description":
+    "Naive React in order to get more familiar with the details of the implementation.",
   "main": "vDOM.mjs",
   "dependencies": {
     "browser-sync": "^2.24.4"
   },
   "devDependencies": {},
   "scripts": {
-    "start": "browser-sync start --server --file index.html",
+    "start": "browser-sync start --server -w --file index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
