@@ -4,7 +4,7 @@
 // const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
 // console.log(dom.window.document.querySelector('p').textContent) // "Hello world"
 
-const h = (type, props = {}, children = []) => ({
+export const h = (type, props = {}, children = []) => ({
   type,
   props,
   children
@@ -222,7 +222,7 @@ const mapAttributeToDomAttribute = attribute => {
   }
 }
 
-const createRender = domElement => {
+export const createRender = domElement => {
   let lastVDOM = null
   let patches = null
 
@@ -244,27 +244,27 @@ const createRender = domElement => {
   }
 }
 
-const WelcomeComponent = ({ name }) =>
-  h('div', {}, [h('text', { text: `Welcome ${name}` })])
+// const WelcomeComponent = ({ name }) =>
+//   h('div', {}, [h('text', { text: `Welcome ${name}` })])
 
-const RootComponent = ({ user }) => {
-  if (user) {
-    return h(WelcomeComponent, { name: user.name })
-  } else {
-    return h('p', {}, [h('text', { text: `Please login` })])
-  }
-}
+// const RootComponent = ({ user }) => {
+//   if (user) {
+//     return h(WelcomeComponent, { name: user.name })
+//   } else {
+//     return h('p', {}, [h('text', { text: `Please login` })])
+//   }
+// }
 
-// Simple demonstration that displays a modified DOM after a specified interval
-const render = createRender(document.getElementById('app'))
+// // Simple demonstration that displays a modified DOM after a specified interval
+// const render = createRender(document.getElementById('app'))
 
-let loggedIn = false
-setInterval(() => {
-  loggedIn = !loggedIn
+// let loggedIn = false
+// setInterval(() => {
+//   loggedIn = !loggedIn
 
-  render(
-    h(RootComponent, {
-      user: loggedIn ? { name: 'Dexter' } : null
-    })
-  )
-}, 1000)
+//   render(
+//     h(RootComponent, {
+//       user: loggedIn ? { name: 'Dexter' } : null
+//     })
+//   )
+// }, 1000)
