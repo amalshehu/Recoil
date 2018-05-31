@@ -1,8 +1,8 @@
-import jsdom from 'jsdom'
-const { JSDOM } = jsdom
+// import jsdom from 'jsdom'
+// const { JSDOM } = jsdom
 
-const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
-console.log(dom.window.document.querySelector('p').textContent) // "Hello world"
+// const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
+// console.log(dom.window.document.querySelector('p').textContent) // "Hello world"
 
 const h = (type, props = {}, children = []) => ({
   type,
@@ -15,11 +15,7 @@ const createVDOM = (element, id = '.') => {
     ...element,
     id,
     children: element.children.map((child, index) => {
-      if (typeof element.type != 'string') {
-        return createVDOM(child, `${id}${index}.`)
-      } else {
-        return child
-      }
+      return createVDOM(child, `${id}${index}.`)
     })
   }
 
@@ -62,14 +58,6 @@ const memoize = component => {
     // Finally we return the cached value. This is referential transparency
     // at work (i.e. we can replace the component invocation with its value)
     return lastResult
-  }
-}
-
-const RootComponent = ({ showDiv }) => {
-  if (showDiv) {
-    return h('h1', {}, [h('text', { text: 'Hello World!' })])
-  } else {
-    return h('h4', {}, [h('text', { text: 'Hello World!ssss' })])
   }
 }
 
@@ -144,14 +132,14 @@ const correlateVDOMNode = (vdomNode, domRoot) => {
 // Creating the DOM node based on a vDOM node is a recursive operation,
 // as we have already mentioned in the chapter about finding changes
 // in the individual subtrees
-const createNodeRecursive = (vdomNode, domNode, eventHandlerRepository) => {
+const createNodeRecursive = (vdomNode, domNode) => {
   // Obviously we need to treat TextNode specially
   if (vdomNode.type === 'text') {
-    const textNode = document.createTextNode(vdomNode.attributes.text)
+    const textNode = document.createTextNode(vdomNode.props.text)
     domNode.appendChild(textNode)
   } else {
     const domElement = document.createElement(vdomNode.type)
-    setHTMLAttributes(domElement, vdomNode, eventHandlerRepository)
+    // setHTMLAttributes(domElement, vdomNode)
 
     // Every created DOM element is tagged by ID so that
     // it's easy to correlate between DOM and vDOM
@@ -160,9 +148,7 @@ const createNodeRecursive = (vdomNode, domNode, eventHandlerRepository) => {
 
     // Here comes the recursion, which
     // obviously doesn't make sense for text nodes
-    vdomNode.children.forEach(child =>
-      createNodeRecursive(child, domElement, eventHandlerRepository)
-    )
+    vdomNode.children.forEach(child => createNodeRecursive(child, domElement))
   }
 }
 
@@ -211,7 +197,7 @@ const applyPatch = (patch, domRoot) => {
           textChildNode.nodeValue = patch.node.attributes.text.toString()
         } else {
           const domNode = correlateVDOMNode(patch.replacingNode, domRoot)
-          setHTMLAttributes(domNode, patch.node)
+          // setHTMLAttributes(domNode, patch.node)
         }
       }
       break
@@ -220,12 +206,12 @@ const applyPatch = (patch, domRoot) => {
       throw new Error(`Missing implementation for patch ${patch.type}`)
   }
 }
-const setHTMLAttributes = (domElement, vdomNode) => {
-  const attributes = Object.keys(vdomNode.attributes).map(attribute => ({
-    key: mapAttributeToDomAttribute(attribute),
-    value: vdomNode.attributes[attribute]
-  }))
-}
+// const setHTMLAttributes = (domElement, vdomNode) => {
+//   const attributes = Object.keys(vdomNode.attributes).map(attribute => ({
+//     key: mapAttributeToDomAttribute(attribute),
+//     value: vdomNode.attributes[attribute]
+//   }))
+// }
 
 const mapAttributeToDomAttribute = attribute => {
   switch (attribute) {
@@ -247,6 +233,7 @@ const createRender = domElement => {
     // Next we get all the changes between the previous vDOM and the new one
     patches = []
     diff(lastVDOM, vdom, patches)
+    console.log('patches', patches)
 
     // Each patch is applied to the DOM
     patches.forEach(patch => applyPatch(patch, domElement))
@@ -254,6 +241,17 @@ const createRender = domElement => {
     // Finally we record the new vDOM so we can use it for comparison purposes
     // during the next render cycle
     lastVDOM = vdom
+  }
+}
+
+const WelcomeComponent = ({ name }) =>
+  h('div', {}, [h('text', { text: `Welcome ${name}` })])
+
+const RootComponent = ({ user }) => {
+  if (user) {
+    return h(WelcomeComponent, { name: user.name })
+  } else {
+    return h('p', {}, [h('text', { text: `Please login` })])
   }
 }
 
@@ -266,7 +264,7 @@ setInterval(() => {
 
   render(
     h(RootComponent, {
-      user: loggedIn ? { name: 'Tomas Weiss' } : null
+      user: loggedIn ? { name: 'Dexter' } : null
     })
   )
 }, 1000)
