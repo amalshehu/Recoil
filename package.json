@@ -4,10 +4,11 @@
   "description": "Naive React in order to get more familiar with the details of the implementation.",
   "main": "vDOM.mjs",
   "dependencies": {
-    "jsdom": "^11.11.0"
+    "browser-sync": "^2.24.4"
   },
   "devDependencies": {},
   "scripts": {
+    "start": "browser-sync start --server --file index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
