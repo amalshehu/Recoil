@@ -3,41 +3,38 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Recoil - A react clone</title>
+  <title>Recoil</title>
 </head>
 
 <body>
-  <div id='app'></div>
+  <div id="container">
+    <div id='app'></div>
+  </div>
 </body>
-
 <script type="module">
-  import { h, createRender } from './lib/vDOM.mjs'
+  import { scaffhold, makeRenderer } from './lib/vDOM.mjs'
+  const render = makeRenderer(document.getElementById('app'))
 
-  const render = createRender(document.getElementById('app'))
-  let loggedIn = false;
-
-  const WelcomeComponent = ({ name }) =>
-    h('div', {}, [h('text', { text: `Welcome ${name}` })])
+  const greetComponent = ({ name }) =>
+    scaffhold('p', {}, [scaffhold('text', { text: `Hello ${name}` })])
 
   const RootComponent = ({ user }) => {
-    return user ?
-      h(WelcomeComponent, { name: user.name })
-      :
-      h('p', {}, [h('text', { text: `Please login` })])
-
+    return user
+      ? (greetComponent, { name: user.name })
+      : scaffhold('span', {}, [
+        scaffhold('text', { text: `No user, Please login` })
+      ])
   }
 
+  let isLogged = false
   setInterval(() => {
-    loggedIn = !loggedIn
-
-    render(h(RootComponent, {
-      user: loggedIn ? { name: 'Dexter' } : null
-    }))
+    isLogged = !isLogged
+    render(
+      scaffhold(RootComponent, {
+        user: isLogged ? { name: 'Dexter' } : null
+      })
+    )
   }, 1000)
-
-
 </script>
 
 </html>
