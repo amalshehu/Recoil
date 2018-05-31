@@ -1,13 +1,8 @@
 import jsdom from 'jsdom'
 const { JSDOM } = jsdom
 
-const dom = new JSDOM(`<!DOCTYPE html><div id='app'></div>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-
-<script type="text/babel">
-  
-</script>
-<div>`)
+const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
+console.log(dom.window.document.querySelector('p').textContent) // "Hello world"
 
 const h = (type, props = {}, children = []) => ({
   type,
@@ -15,7 +10,7 @@ const h = (type, props = {}, children = []) => ({
   children
 })
 
-export const createVDOM = (element, id = '.') => {
+const createVDOM = (element, id = '.') => {
   const newElement = {
     ...element,
     id,
@@ -70,21 +65,19 @@ const memoize = component => {
   }
 }
 
-// Component which can display text in either a div or a span
 const RootComponent = ({ showDiv }) => {
   if (showDiv) {
-    return h('div', {}, ['Hello World'])
+    return h('h1', {}, [h('text', { text: 'Hello World!' })])
   } else {
-    return h('span', {}, ['Hello World'])
+    return h('h4', {}, [h('text', { text: 'Hello World!ssss' })])
   }
 }
 
 // We create one tree that uses div
-const leftVDOM = createVDOM(RootComponent({ showDiv: true }))
-console.log(leftVDOM)
+// const leftVDOM = createVDOM(h(RootComponent, { showDiv: true }));
 
 // ...and a second that uses span
-const rightVDOM = createVDOM(RootComponent({ showDiv: false }))
+// const rightVDOM = createVDOM(h(RootComponent, { showDiv: false }));
 
 const diff = (left, right, patches, parent = null) => {
   // If the left side (i.e. current vDOM) node does not exist, we have to create it.
@@ -133,8 +126,8 @@ const diff = (left, right, patches, parent = null) => {
   }
 }
 
-const patches = []
-diff(leftVDOM, rightVDOM, patches)
+// const patches = []
+// diff(leftVDOM, rightVDOM, patches)
 const ID_KEY = 'data-react-id'
 
 // The correlation between vDOM and DOM nodes is simple.
@@ -144,23 +137,33 @@ const correlateVDOMNode = (vdomNode, domRoot) => {
   if (vdomNode === null) {
     return domRoot
   } else {
-    return dom.window.document.querySelector(`[${ID_KEY}="${vdomNode.id}"]`)
+    return document.querySelector(`[${ID_KEY}="${vdomNode.id}"]`)
   }
 }
 
 // Creating the DOM node based on a vDOM node is a recursive operation,
 // as we have already mentioned in the chapter about finding changes
 // in the individual subtrees
-const createNodeRecursive = (vdomNode, domNode) => {
-  // Create a DOM element of the appropriate type
-  const domElement = dom.window.document.createElement(vdomNode.type)
-  // Set the ID attribute so we can later correlate the vDOM and DOM
-  domElement.setAttribute(ID_KEY, vdomNode.id)
-  // And finally add the node to the DOM
-  domNode.appendChild(domElement)
+const createNodeRecursive = (vdomNode, domNode, eventHandlerRepository) => {
+  // Obviously we need to treat TextNode specially
+  if (vdomNode.type === 'text') {
+    const textNode = document.createTextNode(vdomNode.attributes.text)
+    domNode.appendChild(textNode)
+  } else {
+    const domElement = document.createElement(vdomNode.type)
+    setHTMLAttributes(domElement, vdomNode, eventHandlerRepository)
 
-  // Recurse over the vDOM node's children
-  vdomNode.children.forEach(child => createNodeRecursive(child, domElement))
+    // Every created DOM element is tagged by ID so that
+    // it's easy to correlate between DOM and vDOM
+    domElement.setAttribute(ID_KEY, vdomNode.id)
+    domNode.appendChild(domElement)
+
+    // Here comes the recursion, which
+    // obviously doesn't make sense for text nodes
+    vdomNode.children.forEach(child =>
+      createNodeRecursive(child, domElement, eventHandlerRepository)
+    )
+  }
 }
 
 const applyPatch = (patch, domRoot) => {
@@ -186,17 +189,30 @@ const applyPatch = (patch, domRoot) => {
       }
       break
 
-    case 'replace':
+    case 'replace': {
+      // Find the DOM node that we want to replace
+      const domNode = correlateVDOMNode(patch.replacingNode, domRoot)
+
+      // Remove the node from its parent
+      const parentDomNode = domNode.parentNode
+      parentDomNode.removeChild(domNode)
+
+      // Recursively create the new node
+      createNodeRecursive(patch.node, parentDomNode)
+    }
+    case 'replace_attr':
       {
-        // Find the DOM node that we want to replace
-        const domNode = correlateVDOMNode(patch.replacingNode, domRoot)
-
-        // Remove the node from its parent
-        const parentDomNode = domNode.parentNode
-        parentDomNode.removeChild(domNode)
-
-        // Recursively create the new node
-        createNodeRecursive(patch.node, parentDomNode)
+        if (patch.replacingNode.type === 'text') {
+          const domNode = correlateVDOMNode(patch.replacingNode, domRoot)
+          const textChildNode = [...domNode.childNodes].find(
+            child =>
+              child.nodeValue === patch.replacingNode.attributes.text.toString()
+          )
+          textChildNode.nodeValue = patch.node.attributes.text.toString()
+        } else {
+          const domNode = correlateVDOMNode(patch.replacingNode, domRoot)
+          setHTMLAttributes(domNode, patch.node)
+        }
       }
       break
 
@@ -204,8 +220,23 @@ const applyPatch = (patch, domRoot) => {
       throw new Error(`Missing implementation for patch ${patch.type}`)
   }
 }
+const setHTMLAttributes = (domElement, vdomNode) => {
+  const attributes = Object.keys(vdomNode.attributes).map(attribute => ({
+    key: mapAttributeToDomAttribute(attribute),
+    value: vdomNode.attributes[attribute]
+  }))
+}
 
-export const createRender = domElement => {
+const mapAttributeToDomAttribute = attribute => {
+  switch (attribute) {
+    case 'className':
+      return 'class'
+    default:
+      return attribute
+  }
+}
+
+const createRender = domElement => {
   let lastVDOM = null
   let patches = null
 
@@ -226,8 +257,8 @@ export const createRender = domElement => {
   }
 }
 
-//Simple demonstration that displays a modified DOM after a specified interval
-const render = createRender(dom.window.document.getElementById('app'))
+// Simple demonstration that displays a modified DOM after a specified interval
+const render = createRender(document.getElementById('app'))
 
 let loggedIn = false
 setInterval(() => {
@@ -239,5 +270,3 @@ setInterval(() => {
     })
   )
 }, 1000)
-
-console.log('DOOOM', dom.window.document.getElementById('app'))
