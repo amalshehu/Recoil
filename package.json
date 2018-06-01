@@ -9,7 +9,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "browser-sync start --server -w --file index.html",
+    "start": "browser-sync -s index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
