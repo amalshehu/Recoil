@@ -31,7 +31,8 @@ Recoil is a light-weight library for building user interfaces using the concept 
 
 ### Virtual DOM elements
 
-Value parser takes input from the json and returns the extracted value from factory parser.The return value can be any one of the data types. By checking the forst character of the text, identifies the appropriate parser and returns the value. If no value extracted then each sub parsers will return null.
+WIP
+...
 
 ### Licence
 
