@@ -12,17 +12,17 @@
   </div>
 </body>
 <script type="module">
-  import { scaffhold, makeRenderer } from './lib/vDOM.mjs'
-  const render = makeRenderer(document.getElementById('app'))
+  import { esx, makeRender } from './lib/vDOM.mjs'
+  const render = makeRender(document.getElementById('app'))
 
   const greetComponent = ({ name }) =>
-    scaffhold('p', {}, [scaffhold('text', { text: `Hello ${name}` })])
+    esx('h2', {}, [esx('text', { text: `Hello ${name}` })])
 
   const RootComponent = ({ user }) => {
     return user
-      ? (greetComponent, { name: user.name })
-      : scaffhold('span', {}, [
-        scaffhold('text', { text: `No user, Please login` })
+      ? esx(greetComponent, { name: user.name })
+      : esx('h3', {}, [
+        esx('text', { text: `Not logged in` })
       ])
   }
 
@@ -30,7 +30,7 @@
   setInterval(() => {
     isLogged = !isLogged
     render(
-      scaffhold(RootComponent, {
+      esx(RootComponent, {
         user: isLogged ? { name: 'Dexter' } : null
       })
     )
